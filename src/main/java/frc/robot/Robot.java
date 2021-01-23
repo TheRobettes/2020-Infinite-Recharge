@@ -5,11 +5,42 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+/* Major todo agenda
+---WPI Update!!!!!!!!!!!!!!
+- complete chooser code- for auto selection 
+- get code deployed on comp
+- put can ID's on comp (falcon and sparkmax)
+- test inversions on motors
+- test turret encoder for values - conversion into degrees
+- test encoder on intake arm if absolute or not
+- test pneumatic solenoid ID's 
+- test climber on comp
+- test shooting speed on comp
+- test auto shoot on comp
+- test vision shoot on comp
+- test conveyor to shooter on comp
+- test intaking balls on comp
+- test turret turn on comp
+- test limit switches 
+- new code for automatic vision encoder reset
+
+/* minor todo agenda
+- distance calc
+- auto shoot from sides 
+- move image rect calc from target analysis to distance finder
+- use github
+
+/*----------*/
+
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.autonomoose.DontDrive;
+import frc.robot.commands.TestDrive;
+import frc.robot.vision.CameraControl;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -17,10 +48,18 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends TimedRobot { 
+  private static boolean isVictoria= false;
+  private static boolean isAisha = false;
+  public static boolean isCompetition = true;
+  //TODO: optional another static boolean could define two infinite recharge robots
   private Command m_autonomousCommand;
+  public static RobotMap map = null;
 
-  private RobotContainer m_robotContainer;
+  public static int intakeStartupEncoderValue; 
+
+//TODO turret angle absulute limit switch 
+//TODO fix strafing (investigate weight imbalance, speed encoder vs power)
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -30,7 +69,19 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+    if (isVictoria){
+      map = new RobotMapVictoria();
+    } 
+    else if(isAisha){
+      map = new RobotMapAisha();
+    }
+    else{
+      map = new RobotMap(isCompetition);
+    }
+    new OI();
+
+    CameraControl.cameraInit();
+
   }
 
   /**
@@ -65,7 +116,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    m_autonomousCommand = OI.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -89,6 +140,10 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    //we don't have an absolute encoder for intake so this will get the initial value and set it to 0
+    intakeStartupEncoderValue =  RobotMap.intakeUpOrDown.get();
+
   }
 
   /**
@@ -101,7 +156,23 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
-    CommandScheduler.getInstance().cancelAll();
+    CommandGroupBase.sequence(
+      new TestDrive(),
+      new DontDrive()
+      /*new BasicCommand(OI.intakeArm, 0.5, 1.0),
+      new BasicCommand(OI.ballIntake, 0.5, 1.0),
+      new BasicCommand(OI.intakeBrake, 0.5, 1.0),
+      new BasicCommand(OI.turretTurn, 0.5,0.5),
+      new PrintCommand("Beginning turret return..."),
+      new TurretSpinner(0.0),
+      new BasicCommand(OI.pewPewPew, 0.5, 1.0),
+      new PrintCommand("pewPew performed!"),
+      new BasicCommand(OI.pushUp, 0.5, 0.5),
+      CommandGroupBase.parallel(
+        new BasicCommand(OI.shinnyUp,-0.5),
+        new BasicCommand(OI.pushUp, -0.5)
+      )*/
+    ).schedule(); //excute the newly-created command
   }
 
   /**
@@ -110,4 +181,5 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
+
 }

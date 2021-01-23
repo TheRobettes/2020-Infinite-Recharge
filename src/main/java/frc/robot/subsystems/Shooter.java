@@ -7,18 +7,21 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotMap;
+import frc.robot.utilities.GenericEncoder;
 
-public class ExampleSubsystem extends SubsystemBase {
+public class Shooter extends BasicController {
+  private static final GenericEncoder pewPewSpeed = RobotMap.pewPewSpeed;
+  
+
   /**
    * Creates a new ExampleSubsystem.
    */
-  public ExampleSubsystem() {
-
+  public Shooter() {
+    super(RobotMap.pewPewPew);
   }
 
-  @Override
-  public void periodic() {
-    // This method will be called once per scheduler run
+  public double getRate() {
+    return pewPewSpeed.getRate();
   }
 }
